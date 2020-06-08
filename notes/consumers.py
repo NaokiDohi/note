@@ -1,34 +1,35 @@
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-import json
-import . from models
+import json 
+
+from . import models
 
 class NoteConsumer(WebsocketConsumer):
-    def connect(self):
-        self.room_group_name = 'notes'
+  def connect(self):
+    self.room_group_name = 'notes'
 
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
-            self.channel__name,
-        )
-        self.accept()
+    async_to_sync(self.channel_layer.group_add)(
+      self.room_group_name,
+      self.channel_name
+    )
+    self.accept()
 
-    def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_group_name,
-            self.channel__name,            
-        )
-    
-    def receive(self, text__data):
-        text__data_json = json.load(text__data)
-        title = text__data_json['title']
-        content = text__data_json['content']
-        id = text__data_json['id']
+  def disconnect(self, close_code):
+    async_to_sync(self.channel_layer.group_discard)(
+      self.room_group_name,
+      self.channel_name
+    )
+  
+  def receive(self, text_data):
+    text_data_json = json.loads(text_data)
+    title = text_data_json['title']
+    content = text_data_json['content']
+    id = text_data_json['id']
 
-        note = models.Note.objects.get(pk=id)
-        note.title = title
-        note.content = content
-        note.save()
+    note = models.Note.objects.get(pk=id)
+    note.title = title 
+    note.content = content
+    note.save()
 
     async_to_sync(self.channel_layer.group_send)(
       self.room_group_name,
